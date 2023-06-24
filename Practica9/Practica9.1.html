@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://fonts.cdnfonts.com/css/digital-7-mono" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <style>
+        html {box-sizing: border-box;font-size: 16px;}*, *:before, *:after {box-sizing: inherit;}body, h1, h2, h3, h4, h5, h6, p, ol, ul {margin: 0;padding: 0;font-weight: normal;}ol, ul {list-style: none;}img {max-width: 100%;height: auto;}
+    
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+        }
+    
+        #calc .calcbody {
+            width: 400px;
+            height: 600px;
+            border: 1px solid #bebebe;
+            background: rgb(180,95,6);
+            background: linear-gradient(0deg, rgba(180,95,6,1) 0%, rgba(230,145,56,1) 50%, rgba(180,95,6,1) 100%); 
+            border-radius: 30px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-content: center;
+            padding: 20px;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+    
+        #calc .calcscreen {
+            width: 350px;
+            background-color: #fff;
+            height: 65px;
+            margin-bottom: 10px;
+            border: 3px solid #ddd;
+            border-radius: 3px;
+            box-shadow: 0 0 8px 1px rgba(150, 150, 150, 0.75) inset;
+            font-family: 'Digital-7 Mono', sans-serif;
+            font-size: 35px;
+            text-align: right;
+            padding: 15px;
+            pointer-events: none;
+        }
+    
+        #calc .calcbody button {
+            background-color: #efefef;
+            box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.35);
+            border: 0;
+            border-radius: 10px;
+            font-family: inherit;
+            height: 80px;
+            margin: 5px 0;
+            width: 80px;
+            font-size: 25px;
+        }
+    
+        #calc .calcbody button.size-3x {
+            width: 261px;
+        }
+    
+        #calc .calcbody button:active {
+            background-color: #dedede;
+            transform: scale(0.95)
+        }
+    
+        #calc .calcbody button.selected {
+            background-color: #990000;
+            color: #fff;
+            font-weight: bold;
+            font-size: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="calc">
+        <div class="calcbody">
+            <input class="calcscreen" value="0" readonly />
+            <button class="size-3x" data-definition="clear" data-content="all">AC</button>
+            <button data-definition="operation" data-content="/">÷</button>
+            <button data-definition="number" data-content="7">7</button>
+            <button data-definition="number" data-content="8">8</button>
+            <button data-definition="number" data-content="9">9</button>
+            <button data-definition="operation" data-content="*">x</button>
+            <button data-definition="number" data-content="4">4</button>
+            <button data-definition="number" data-content="5">5</button>
+            <button data-definition="number" data-content="6">6</button>
+            <button data-definition="operation" data-content="-">–</button>
+            <button data-definition="number" data-content="1">1</button>
+            <button data-definition="number" data-content="2">2</button>
+            <button data-definition="number" data-content="3">3</button>
+            <button data-definition="operation" data-content="+">+</button>
+            <button data-definition="number" data-content="0">0</button>
+            <button data-definition="number" data-content=".">.</button>
+            <button data-definition="clear" data-content="backspace">&#9003;</button>
+            <button data-definition="operation" data-content="result">=</button>
+        </div>
+    </div>
+    <script>
+        const calculator = document.getElementById('calc')
+        const calcButtons = calculator.querySelectorAll('button')
+        const calcScreen = calculator.querySelector('.calcscreen')
+
+        calcButtons.forEach(function (button) {
+            button.addEventListener('click', (event) => {
+                let definition = event.target.dataset.definition
+                let content = event.target.dataset.content
+
+                if (definition === 'number') {
+                    fillScreen(content)
+                } else if (definition === 'operation') {
+                    resetButtons()
+                    doOperation(calcScreen.value)
+                    if (content !== 'result') {
+                        button.classList.add('selected')
+                        sessionStorage.setItem('operationtype', content)
+                    }
+                    if (!sessionStorage.getItem('numberA')) {
+                        sessionStorage.setItem('numberA', calcScreen.value)
+                    }
+                } else if (definition === 'clear') {
+                    clear(content)
+                }
+            })
+        })
+
+        window.addEventListener("beforeunload", (event) => { clear('all') })
+
+        function resetButtons () {
+            const operationButtons = calculator.querySelectorAll('button[data-definition=operation]')
+            operationButtons.forEach((item)=> {
+                item.classList.remove('selected')
+            })
+        }
+
+        function clear (type = 'all') {
+            if (type === 'backspace') {
+                if (calcScreen.value.length > 1) calcScreen.value = calcScreen.value.slice(0, -1)
+                else clear()
+                
+            } else {
+                calcScreen.value = 0
+                resetButtons()
+                sessionStorage.removeItem('numberA')
+                sessionStorage.removeItem('clearnext')
+                sessionStorage.removeItem('operationtype')
+            }
+        }
+
+        function fillScreen (content) {
+            if(content === '.') {
+                if (!calcScreen.value.includes('.')) calcScreen.value += content
+            } else {
+                if (sessionStorage.getItem('clearnext')) {
+                    sessionStorage.removeItem('clearnext')
+                    calcScreen.value = content
+                } else if (calcScreen.value === '0' && content !== 0) {
+                    calcScreen.value = content
+                } else calcScreen.value += content
+            }
+        }
+
+        function doOperation (numberB, type = false) {
+            const numberA = parseFloat(sessionStorage.getItem('numberA')) || 0
+            numberB = parseFloat(numberB)
+            const opType = sessionStorage.getItem('operationtype')
+            let result
+            let keepResult = true
+            switch(opType) {
+                case '/':
+                    result = numberA / numberB
+                    break
+                case '*':
+                    result = numberA * numberB
+                    break
+                case '-':
+                    result = numberA - numberB
+                    break
+                case '+':
+                    result = numberA + numberB
+                    break
+                default:
+                    keepResult = false
+                    result = calcScreen.value
+            }
+            calcScreen.value = result
+            if (sessionStorage.getItem('numberA') && !keepResult) {
+                sessionStorage.removeItem('numberA')
+            } else {
+                sessionStorage.setItem('numberA', result)
+            }
+            sessionStorage.removeItem('operationtype')
+            sessionStorage.setItem('clearnext', true)
+        }
+
+        document.addEventListener('keyup', (event)=>{
+            if (event.key === 'Backspace') {
+                if (event.shiftKey) calculator.querySelector('button[data-content=all]').click()
+                else calculator.querySelector('button[data-content=backspace]').click()
+            } else if (event.key === 'Enter') {
+                calculator.querySelector('button[data-content=result]').click()
+            } else {
+                if (calculator.querySelector(`button[data-content="${event.key}"]`)) calculator.querySelector(`button[data-content="${event.key}"]`).click()
+            }
+        })
+    </script>
+</body>
+</html>
