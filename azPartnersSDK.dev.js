@@ -464,7 +464,7 @@ function AztecaLogin () {
   const loginButton = document.querySelector('.loginAzteca')
   const body = document.body
   const logoutButton = document.getElementById('logoutAzteca')
-  logoutButton.style.display = 'none'
+  if (logoutButton) logoutButton.style.display = 'none'
 
   if (loginButton) {
     loginButton.style.display = 'block'
